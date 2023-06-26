@@ -4,6 +4,11 @@
 #include <windows.h>
 #include <conio.h>
 #include <string.h>
+
+#define low 80
+#define up 72
+#define esc 27
+#define enter 13
 //------------------------------------------------------------------------------------------------------
 void gotoxy(int x, int y) {
     COORD pos = { x, y };
@@ -17,24 +22,36 @@ int SetColor (char color) {
   return SetConsoleTextAttribute (h,color);
 }
 //------------------------------------------------------------------------------------------------------
-void reprocessing(int lifes, int level){
+void reprocessing(int lifes, int level, int *points){
     char c;
+    int pointers;
     do{
-        gotoxy(8,6);
-        printf("Press: <ENTER> to use one life and keep at this level"
-                " | <F1> to go back to beginning | <ESC> to quit");
+        gotoxy(8,8);
+        printf("Press:");
+        gotoxy(8,10);
+        printf("<ENTER> to use one life and keep at this level (but you lose your %d point(s))", *points);
+        gotoxy(8,12);
+        printf("<F1> to go back to beginning");
+        gotoxy(8,14);
+        printf("<ESC> to quit");
         c = getch();
     } while(c != 13 && c != 27 && c != 59);
     if (c == 13){
         if(lifes > 0){
+            system("cls");
+            *points = 0;
             switch(level){
-                case 2: system("cls");
-                        levelB(lifes);
+                case 1: levelA(lifes, points);
+                        break;
+                case 2: levelB(lifes, points);
+                        break;
+                case 3: levelC(lifes, points);
                         break;
             }
         }
         else{
             gotoxy(10,8);
+            system("cls");
             printf("You run out of lifes! Press <ESC> to quit or <F1> to start over");
             do{
                 c = getch();
@@ -51,30 +68,33 @@ void reprocessing(int lifes, int level){
 
 //------------------------------------------------------------------------------------------------------
 
-void presentation(int op){
+void presentation(int op, int *points){
     char level, w[1][10], c;
+    int point;
     switch(op){
         case 1: level = 'A';
+                point = 1;
                 strcpy(w[0], "numbers");
                 system("color 01");
                 break;
         case 2: level = 'B';
+                point = 2;
                 strcpy(w[0], "words");
                 system("color 17");
                 break;
         case 3: level = 'C';
+                point = 3;
                 strcpy(w[0], "especials");
                 system("color 20");
                 break;
     }
-    system("color 00");
-    printf("        Welcome to level %c!\n\n", level);
+    printf("        Welcome to level %c! You have %d points\n\n", level, *points);
     printf("        You need to memorize the %s that will appear on the screen, you have 5 seconds.\n\n", w[0]);
-    printf("        Each time you hit the right %s, you will earn 1 point and the game will be more difficult\n\n", w[0]);
+    printf("        Each time you hit the right %s, you will earn %d point(s) and the game will be more difficult\n\n", w[0], point);
     printf("        Press ENTER to start the game or ESC to exit");
     do{c = getch();} while (c != 13 && c != 27);
     if (c == 27){
-        printf("Are you sre you want to exit? You will lose your progress");
+        printf("Are you sure you want to exit? You will lose your progress");
         c = getch();
         if(c == 27)
             exit(0);
@@ -83,6 +103,26 @@ void presentation(int op){
     fflush(stdout);
 
 }
+
+//-------------------------------------------------------------------------
+
+void escreveTexto (int x, int y, char texto[], int cor){
+  SetColor (cor);
+  gotoxy (y,x);
+  printf ("%s",texto);
+}
+
+//------------------------------------------------------------------------------------------------------
+
+void menu (int op){
+  char vet[][60] = {"Start from level A - numbers", "Jump to B - words", "Jump to C - specials", "exit"};
+  int i;
+  system ("cls");
+  for (i = 0; i < 4; i++)
+    escreveTexto (3+i,4,vet[i],10);
+  escreveTexto (2+op,4,vet[op-1],5);
+}
+
 //------------------------------------------------------------------------------------------------------
 void seconds(){
     int k;
@@ -93,12 +133,11 @@ void seconds(){
        sleep(1);
     }
 }
-//------------------------------------------------------------------------------------------------------
+//*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
 
 void levelA(int lifes, int *points){
     int i, j, fail = 0, posi = 10, count, answer, number[20];
-    char c;
-    presentation(1);
+    presentation(1, points);
       count = 1;
       system ("cls");
       do{
@@ -136,23 +175,22 @@ void levelA(int lifes, int *points){
                 i = count + 2;
                 fail = 1;
                 lifes--;
-                reprocessing(lifes, 1);
+                reprocessing(lifes, 1, points);
             }
         }
         fflush(stdout);
         posi = 10;
         system("cls");
         count++;
-    } while(fail != 1 && count < 2);
+    } while(fail != 1 && count < 3);
 }
 
-
-
+//*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
 
 void levelB(int lifes, int *points){
     int i, position[20], result, count = 1, posi = 10, fail = 0;
     char guess[15];
-    presentation(2);
+    presentation(2, points);
     system("cls");
     char c, word[23][15] = {"hardware", "computer", "network", "memory", "linux", "keyboard", "java"
     , "internet", "firewall", "encryption", "debug", "binary", "algorithm", "byte", "cache", "virus",
@@ -162,8 +200,8 @@ void levelB(int lifes, int *points){
         for(i = 0; i < count + 2; i++){
             position[i] = rand() % 23;
             gotoxy(posi,3);
-            printf("%s     ", word[position[i]]);
-            posi += 10;
+            printf("%s          ", word[position[i]]);
+            posi += 20;
         }
         seconds();
         system("cls");
@@ -177,7 +215,7 @@ void levelB(int lifes, int *points){
                 gotoxy(posi,4);
                 printf("Correct!\n");
                 posi += 10;
-                (*points)++;
+                (*points) += 2;
             }
             else{
                 gotoxy(posi,4);
@@ -187,21 +225,23 @@ void levelB(int lifes, int *points){
                 i = count + 2;
                 fail = 1;
                 lifes--;
-                reprocessing(lifes, 2);
+                reprocessing(lifes, 2, &points);
             }
         }
         fflush(stdout);
         posi = 10;
         system("cls");
         count++;
-    } while (fail != 1 && count < 2);
+    } while (fail != 1 && count < 4);
 }
 
-void levelC(){
-    presentation(3);
-    int i, n, fail = 0, count = 1, posi = 10;
+//*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+
+void levelC(int lifes, int *points){
+    presentation(3, points);
+    int i, fail = 0, count = 1, posi = 10;
     int position[24];
-    char c, especial[24][15] = {"<ESC>", "<ENTER>", "F1", "F2", "F3", "F4", "F5", "F6"
+    char especial[24][15] = {"<ESC>", "<ENTER>", "F1", "F2", "F3", "F4", "F5", "F6"
     ,                        "F7", "F8", "!", "&", "*", ")", "?", "#", "+", "=", ":", ";", "$", "[", "]", ">", "<"};
     int  esp[24] = {27, 13, 59, 60, 61, 62, 63, 64, 65, 66, 33, 38, 42, 41, 63, 35, 43, 61, 58, 36
     ,91, 93, 62, 60};
@@ -228,21 +268,17 @@ void levelC(){
                 gotoxy(posi,5);
                 printf("Correct!\n");
                 posi += 10;
+                (*points) += 3;
             }
             else{
+                gotoxy(posi,4);
+                printf("Wrong ;(");
                 gotoxy(posi,5);
-                printf("You type wrong, the right asnwer was %s ", especial[position[i]]);
+                printf("The correct answer was %s\n", especial[position[i]]);
                 i = count + 2;
                 fail = 1;
-                do{
-                    gotoxy(8,6);
-                    printf("Press ENTER to start again or ESC to exit\n ");
-                    c = getch();
-                } while(c != 13 && c != 27);
-                if (c == 13){
-                    count = 0;
-                    fail = 0;
-                }
+                lifes--;
+                reprocessing(lifes, 3, &points);
             }
         }
         fflush(stdout);
@@ -255,10 +291,38 @@ void levelC(){
 
 
 int main(){
-    int lifes = 3, points = 0;
-    srand(time(NULL));
-    levelA(lifes, &points);
-    levelB(lifes, &points);
-    printf("you have %d points", points);
-    levelC(lifes);
+  srand(time(NULL));
+  char t;
+  int op = 1, lifes = 3, points = 0;
+  menu (op);
+  do{
+	  t = getch();
+	  // se for caracter especial
+	  if (t <= 0){
+	    t = getch();
+	  if (t == low){
+	    if (op != 4) op++; 
+		   else op = 1;
+		menu (op);
+	  }
+	  else if (t == up) {
+	  	if (op != 1) op--;
+		else op = 4;
+		menu (op);
+	  }
+    }
+    else{
+      if (t == enter){
+        fflush(stdout);
+        system("cls");
+        switch(op){
+            case 1: levelA(lifes, &points);
+            case 2: levelB(lifes, &points);
+            case 3: levelC(lifes, &points);
+                    break;
+            case 4: exit(0);
+        }
+      }
+    }
+  } while (t != 27);
 }   
